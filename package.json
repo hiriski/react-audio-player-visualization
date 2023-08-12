@@ -14,11 +14,13 @@
     "@emotion/styled": "^11.11.0",
     "@fontsource/jost": "^5.0.8",
     "@mui/material": "^5.14.4",
+    "lodash.merge": "^4.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@iconify/react": "^4.1.1",
+    "@types/lodash.merge": "^4.6.7",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
@@ -29,6 +31,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
+    "path": "^0.12.7",
     "prettier": "^3.0.1",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
