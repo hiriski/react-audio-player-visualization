@@ -9,7 +9,7 @@ const typography: TypographyOptions = {
   fontWeightLight: 300,
   fontWeightRegular: 400,
   fontWeightMedium: 400,
-  fontWeightBold: 700,
+  fontWeightBold: 600,
   h1: {
     fontWeight: 400,
     fontSize: 34
