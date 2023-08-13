@@ -71,7 +71,6 @@ const MediaPlayer = () => {
   const onMediaChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target?.files?.[0]
     if (file) {
-      console.log('file', file)
       setMediaFile(file)
       setFileName(file?.name ?? '')
     }
