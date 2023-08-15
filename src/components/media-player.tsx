@@ -6,20 +6,35 @@ import {
   BoxMediaInfo,
   BoxUpload,
   CoverImage,
-  UploadButton,
   WallPaper,
   Widget,
   WidgetWrapper
 } from './media-player.style'
 import Iconify from './iconify'
+import { motion, useAnimationControls } from 'framer-motion'
+import { mediaList } from '@/data'
+import { IMedia } from '@/interfaces'
 
-const BAR_WIDTH = 2
+function calculateMean(values: number[]): number {
+  if (values.length === 0) {
+    return 0
+  }
+
+  const sum = values.reduce((acc, currentValue) => acc + currentValue, 0)
+  const mean = sum / values.length
+
+  return Math.round(mean)
+}
+
+const BAR_WIDTH = 4
 let animationController: number
 const audioContext = new AudioContext()
 
 const MediaPlayer = () => {
   // hooks
   const theme = useTheme()
+
+  const animationControls = useAnimationControls()
 
   // refs
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -30,10 +45,14 @@ const MediaPlayer = () => {
   // states
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
+  const [currentMedia, setCurrentMedia] = useState<IMedia>(mediaList[0])
 
   const createAudiVisualizeData = (): void => {
     animationController = window.requestAnimationFrame(createAudiVisualizeData)
     if (audioRef?.current?.paused) {
+      animationControls.set({
+        scale: 1
+      })
       return cancelAnimationFrame(animationController)
     }
     const arrayCount = Number(canvasRef?.current?.width) / BAR_WIDTH
@@ -47,9 +66,56 @@ const MediaPlayer = () => {
       let start = 0
       const ctx = canvasRef.current.getContext('2d') as CanvasRenderingContext2D
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+
+      const getScale = (value: number) => {
+        // const baseScale = 1
+        let scale = 1
+        const thresholds = [
+          { min: 0, max: 20, scale: 1 },
+          { min: 20, max: 50, scale: 1.01 },
+          { min: 51, max: 80, scale: 1.02 },
+          { min: 81, max: 120, scale: 1.03 },
+          { min: 121, max: 140, scale: 1.05 },
+          { min: 141, max: 150, scale: 1.08 },
+          { min: 151, max: 160, scale: 1.1 },
+          { min: 161, max: 170, scale: 1.13 },
+          { min: 171, max: 180, scale: 1.16 },
+          { min: 191, max: 200, scale: 1.2 },
+          { min: 201, max: 210, scale: 1.22 },
+          { min: 211, max: 220, scale: 1.26 },
+          { min: 221, max: 230, scale: 1.29 },
+          { min: 231, max: 240, scale: 1.34 },
+          { min: 241, max: 250, scale: 1.39 },
+          { min: 251, max: 260, scale: 1.45 },
+          { min: 280, max: Infinity, scale: 1.55 }
+        ]
+
+        for (const threshold of thresholds) {
+          if (value > threshold.min && value < threshold.max) {
+            scale = threshold.scale
+            break
+          }
+        }
+
+        // const scaleFactor = 0.02 // Adjust this factor as needed
+        // scale = baseScale + Math.floor(audioData[0] / 20) * scaleFactor
+        return scale
+      }
+
+      animationControls.set({
+        scale: getScale(
+          calculateMean(audioData.slice(5, 12) as unknown as number[])
+        )
+      })
+
+      // console.log(
+      //   'value --->',
+      //   calculateMean(audioData.slice(5, 12) as unknown as number[])
+      // )
+
       for (let i = 0; i < audioData.length; i++) {
         // compute x coordinate where we would draw
-        start = i * BAR_WIDTH
+        start = i * (BAR_WIDTH + 1)
 
         const recHeight = Number(-audioData[i])
 
@@ -60,7 +126,7 @@ const MediaPlayer = () => {
           canvasRef.current.width,
           canvasRef.current.height
         )
-        gradient.addColorStop(0.2, '#FF2525')
+        gradient.addColorStop(0.1, '#FF2525')
         gradient.addColorStop(1.0, '#ffd83b')
         ctx.fillStyle = gradient
         ctx.fillRect(start, canvasRef.current.height, BAR_WIDTH, recHeight)
@@ -98,13 +164,13 @@ const MediaPlayer = () => {
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
-        mt: 2
+        mt: 8
       }}
     >
       <WidgetWrapper>
         <Widget>
           <Box sx={{ zIndex: 1 }}>
-            {!mediaFile ? (
+            {!currentMedia ? (
               <BoxUpload htmlFor='inputMediaFile'>
                 <Box sx={{ mb: 1.2, color: 'primary.main' }}>
                   <Iconify
@@ -126,15 +192,35 @@ const MediaPlayer = () => {
               </BoxUpload>
             ) : (
               <BoxMediaInfo>
-                <CoverImage>
-                  <img src='/react.svg' alt='Cover image' />
-                </CoverImage>
-                <Typography
-                  sx={{ textAlign: 'center', fontSize: '1rem', mb: 1.2 }}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    '> *': {
+                      transition: 'transform 0.1s ease'
+                    }
+                  }}
                 >
-                  {fileName}
-                </Typography>
-                <UploadButton htmlFor='inputMediaFile'>
+                  <motion.div animate={animationControls}>
+                    <CoverImage isPlaying={false}>
+                      <img
+                        alt={currentMedia.title ?? 'Cover img'}
+                        src={currentMedia.cover_image_url}
+                      />
+                    </CoverImage>
+                  </motion.div>
+                </Box>
+                <Box sx={{ maxWidth: '100%', textAlign: 'center', mt: 1 }}>
+                  <Typography variant='caption' color='#333' fontWeight={500}>
+                    {currentMedia?.artist ? currentMedia.artist : '-'}
+                  </Typography>
+                  <Typography noWrap variant='h6' sx={{ color: '#333' }}>
+                    <b>{currentMedia?.title ? currentMedia.title : '-'}</b>
+                  </Typography>
+                </Box>
+                {/* <UploadButton htmlFor='inputMediaFile'>
                   <Iconify
                     icon='solar:music-library-2-bold-duotone'
                     fontSize={20}
@@ -142,7 +228,7 @@ const MediaPlayer = () => {
                   <Typography sx={{ ml: 1, fontWeight: '600' }}>
                     Change Media
                   </Typography>
-                </UploadButton>
+                </UploadButton> */}
               </BoxMediaInfo>
             )}
             <Box
@@ -153,7 +239,7 @@ const MediaPlayer = () => {
               accept='audio/*,video/*'
               onChange={onMediaChange}
             />
-            {mediaFile && (
+            {currentMedia && (
               <Box
                 sx={{
                   display: 'flex',
@@ -171,7 +257,7 @@ const MediaPlayer = () => {
                 <audio
                   ref={audioRef}
                   onPlay={handleAudioPlay}
-                  src={window.URL.createObjectURL(mediaFile)}
+                  src={currentMedia.file_url}
                   controls
                 />
               </Box>
@@ -180,7 +266,7 @@ const MediaPlayer = () => {
           <Box
             sx={{
               position: 'absolute',
-              bottom: -6,
+              bottom: -10,
               left: 0,
               zIndex: -1
             }}

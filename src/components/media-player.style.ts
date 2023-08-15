@@ -3,6 +3,9 @@ import { styled } from '@mui/material/styles'
 export const WallPaper = styled('div')({
   zIndex: -1,
   position: 'absolute',
+  backgroundImage:
+    'url("334986476_596031572542316_8847941770663362142_n.jpeg")',
+  backgroundRepeat: 'no-repeat',
   width: '100%',
   height: '100%',
   top: 0,
@@ -10,9 +13,16 @@ export const WallPaper = styled('div')({
   overflow: 'hidden',
   backgroundPosition: 'center',
   backgroundSize: 'cover',
-  backgroundColor: '#FA8BFF',
-  backgroundImage:
-    'linear-gradient(45deg, #FA8BFF 0%, #2BD2FF 52%, #74d8a0 90%)'
+  '&:after': {
+    content: "''",
+    width: '100%',
+    height: '100%',
+    display: 'block',
+    top: 0,
+    left: 0,
+    backgroundImage:
+      'linear-gradient(45deg, rgb(253 208 255 / 15%) 0%, rgb(147 232 255 / 67%) 52%, rgb(189 254 218 / 35%) 90%)'
+  }
 })
 
 export const WidgetWrapper = styled('div')(({ theme }) => ({
@@ -20,7 +30,7 @@ export const WidgetWrapper = styled('div')(({ theme }) => ({
   height: '100%',
   position: 'relative',
   [theme.breakpoints.up('sm')]: {
-    width: 450,
+    width: 400,
     height: 572
   },
   zIndex: 1
@@ -53,7 +63,7 @@ export const Widget = styled('div')(({ theme }) => ({
     left: 0,
     backgroundColor: '#fbfbfb',
     backgroundImage:
-      'linear-gradient(0deg, rgb(245 209 221 / 74%) 0%, rgb(165 255 251) 100%)',
+      'linear-gradient(30deg, rgb(255 142 228 / 44%) 0%, rgb(147 255 250) 100%)',
     zIndex: -3
   }
 }))
@@ -61,14 +71,12 @@ export const Widget = styled('div')(({ theme }) => ({
 export const CoverImage = styled('div', {
   shouldForwardProp: prop => prop !== 'isPlaying'
 })<{ isPlaying?: boolean }>(({ theme, isPlaying }) => ({
-  transition: [theme.transitions.create(['width', 'height'])],
-  width: isPlaying ? 85 : 150,
-  height: isPlaying ? 85 : 150,
+  // transition: [theme.transitions.create(['width', 'height'])],
+  width: isPlaying ? 85 : 110,
+  height: isPlaying ? 85 : 110,
+  borderRadius: 110,
   marginBottom: theme.spacing(2),
-  ...(isPlaying && {
-    animation: 'rotating 3s linear infinite'
-  }),
-
+  overflow: 'hidden',
   '& > img': {
     height: '100%',
     width: '100%'

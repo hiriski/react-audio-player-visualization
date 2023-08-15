@@ -8,7 +8,7 @@ const Footer = () => (
   <Stack
     direction='column'
     alignItems='center'
-    sx={{ py: 3, color: '#fbfbfb' }}
+    sx={{ py: 3, color: '#333' }}
     spacing={0.3}
   >
     <Stack direction='row' spacing={0.6} alignItems='center'>
