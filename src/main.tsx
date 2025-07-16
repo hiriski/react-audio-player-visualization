@@ -5,7 +5,6 @@ import './main.css'
 import './custom.css'
 
 // fonts
-import '@fontsource/jost' // Defaults to weight 400
 import '@fontsource/jost/400.css'
 import '@fontsource/jost/400-italic.css'
 import '@fontsource/jost/500.css'

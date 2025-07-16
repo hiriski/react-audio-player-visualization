@@ -12,9 +12,6 @@ import PauseIcon from '@/assets/icons/fluent--pause-20-filled.svg?react'
 import PrevIcon from '@/assets/icons/fluent--previous-24-filled.svg?react'
 import NextIcon from '@/assets/icons/fluent--next-28-filled.svg?react'
 
-// React player
-import ReactPlayer from 'react-player'
-
 // styles
 import {
   Widget,
@@ -33,20 +30,13 @@ import { useMedia } from '@/hooks'
 const BAR_WIDTH = 3
 
 let animationController: number
-const audio = new Audio()
 
 const MediaPlayer = () => {
   const theme = useTheme()
 
-  // const dispatch = useAppDispatch()
-
-  const { mediaList, currentMedia, setCurrentAudioFile, currentAudioFile } =
-    useMedia()
-
-  const [duration, setDuration] = useState<number>(0)
+  const { currentMedia } = useMedia()
   const [position, setPosition] = React.useState<number>(0)
 
-  const ref = useRef<typeof ReactPlayer>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const source = useRef<MediaElementAudioSourceNode | null>(null)
@@ -60,25 +50,14 @@ const MediaPlayer = () => {
     return `${minute}:${secondLeft < 10 ? `0${secondLeft}` : secondLeft}`
   }
 
-  // const mainIconColor = theme.palette.mode === 'dark' ? '#fff' : '#000'
-  const mainIconColor = '#fff'
-
   const onChangeSong = useCallback(
     (type: 'prev' | 'next') => {
+      console.log('type', type)
       // dispatch(media_changeMedia({ id: Number(currentMedia?.id), type }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [Number(currentMedia?.id)]
   )
-
-  const handleSeekChange = (sec: number) => {
-    // console.log('sec', sec.toFixed(0))
-    console.log('sec', sec)
-    if (audioRef.current) {
-      setPosition(Number(sec))
-      // ref.current.seekTo(Number(sec.toFixed(0)))
-    }
-  }
 
   const createAudiVisualizeData = (): void => {
     animationController = requestAnimationFrame(createAudiVisualizeData)
@@ -148,20 +127,6 @@ const MediaPlayer = () => {
       setIsPlaying(false)
     }
   }
-
-  /* ---------- metadata: duration ---------- */
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const handleLoaded = () => setDuration(audio.duration || 0)
-    audio.addEventListener('loadedmetadata', handleLoaded)
-
-    // if metadata is cached
-    if (audio.readyState >= 1) handleLoaded()
-
-    return () => audio.removeEventListener('loadedmetadata', handleLoaded)
-  }, [audioRef?.current])
 
   /* ---------- current position ---------- */
   useEffect(() => {

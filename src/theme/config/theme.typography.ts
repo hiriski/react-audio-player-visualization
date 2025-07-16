@@ -1,10 +1,8 @@
-import { TypographyOptions } from '@mui/material/styles/createTypography'
-
 const fontFamily = [
   '"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 ].join(',')
 
-const typography: TypographyOptions = {
+const typography = {
   fontFamily,
   fontWeightLight: 300,
   fontWeightRegular: 400,
