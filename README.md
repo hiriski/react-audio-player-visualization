@@ -1,5 +1,7 @@
 # React Audio Player with Visualization
 
+<video src="public/demo.mp4" width="100%" />
+
 A modern, interactive music player built with React, TypeScript, and Vite featuring real-time audio spectrum visualization. This application provides a sleek interface for playing audio files with animated visual feedback that responds to the music's frequency data.
 
 ## ✨ Features
@@ -14,6 +16,7 @@ A modern, interactive music player built with React, TypeScript, and Vite featur
 ## 🚀 Demo
 
 The player includes:
+
 - Interactive play/pause/previous/next controls
 - Real-time audio frequency visualization using Canvas API
 - Smooth animations powered by Framer Motion
@@ -33,12 +36,14 @@ The player includes:
 ## 📦 Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd react-audio-player-visualization
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -46,6 +51,7 @@ yarn install
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 # or
@@ -82,13 +88,16 @@ src/
 ## 🎨 Key Components
 
 ### MediaPlayer
+
 The main component that handles:
+
 - Audio playback using HTML5 audio element
 - Web Audio API integration for visualization
 - Canvas-based spectrum analyzer
 - Play/pause state management
 
 ### Audio Visualization
+
 - Uses Web Audio API's `AnalyserNode` for frequency data
 - Renders real-time bars using HTML5 Canvas
 - Gradient effects for visual appeal
@@ -97,6 +106,7 @@ The main component that handles:
 ## 🔧 Configuration
 
 ### Audio Files
+
 Place your audio files in the `public/media/` directory and update the media data in `src/data/media.ts`:
 
 ```typescript
@@ -112,6 +122,7 @@ export const mediaData: IMedia[] = [
 ```
 
 ### Theme Customization
+
 Modify the theme in `src/theme/` directory to customize colors, typography, and component styles.
 
 ## 📱 Browser Support
@@ -121,7 +132,7 @@ Modify the theme in `src/theme/` directory to customize colors, typography, and 
 - Safari
 - Edge
 
-*Note: Web Audio API support required for visualization features*
+_Note: Web Audio API support required for visualization features_
 
 ## 🤝 Contributing
 
