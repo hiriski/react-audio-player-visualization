@@ -1,6 +1,8 @@
 # React Audio Player with Visualization
 
-<video src="public/demo.mp4" width="100%" />
+<p>
+  <video src="demo.mp4" width="100%" />
+</p>
 
 A modern, interactive music player built with React, TypeScript, and Vite featuring real-time audio spectrum visualization. This application provides a sleek interface for playing audio files with animated visual feedback that responds to the music's frequency data.
 
