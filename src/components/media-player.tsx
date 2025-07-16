@@ -1,160 +1,146 @@
-import { ChangeEvent, useRef, useState } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
+
+// components
 import Box from '@mui/material/Box'
-import { useTheme } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+
+// icons
+import PlayIcon from '@/assets/icons/fluent--play-32-filled.svg?react'
+import PauseIcon from '@/assets/icons/fluent--pause-20-filled.svg?react'
+import PrevIcon from '@/assets/icons/fluent--previous-24-filled.svg?react'
+import NextIcon from '@/assets/icons/fluent--next-28-filled.svg?react'
+
+// styles
 import {
-  BoxMediaInfo,
-  BoxUpload,
-  CoverImage,
-  WallPaper,
   Widget,
+  TinyText,
+  CoverImage,
+  BackgroundStyle,
   WidgetWrapper
-} from './media-player.style'
-import Iconify from './iconify'
-import { motion, useAnimationControls } from 'framer-motion'
-import { mediaList } from '@/data'
-import { IMedia } from '@/interfaces'
+} from './media-player.styled'
 
-function calculateMean(values: number[]): number {
-  if (values.length === 0) {
-    return 0
-  }
+// Framer motion
+import { motion } from 'framer-motion'
 
-  const sum = values.reduce((acc, currentValue) => acc + currentValue, 0)
-  const mean = sum / values.length
+// hooks
+import { useMedia } from '@/hooks'
 
-  return Math.round(mean)
-}
+const BAR_WIDTH = 3
 
-const BAR_WIDTH = 4
 let animationController: number
-const audioContext = new AudioContext()
 
 const MediaPlayer = () => {
-  // hooks
   const theme = useTheme()
 
-  const animationControls = useAnimationControls()
+  const { currentMedia } = useMedia()
+  const [position, setPosition] = React.useState<number>(0)
 
-  // refs
   const audioRef = useRef<HTMLAudioElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const source = useRef<MediaElementAudioSourceNode | null>(null)
   const analyzer = useRef<AnalyserNode | null>(null)
 
-  // states
-  const [mediaFile, setMediaFile] = useState<File | null>(null)
-  const [fileName, setFileName] = useState('')
-  const [currentMedia, setCurrentMedia] = useState<IMedia>(mediaList[0])
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  function formatDuration(value: number) {
+    const minute = Math.floor(value / 60)
+    const secondLeft = value - minute * 60
+    return `${minute}:${secondLeft < 10 ? `0${secondLeft}` : secondLeft}`
+  }
+
+  const onChangeSong = useCallback(
+    (type: 'prev' | 'next') => {
+      console.log('type', type)
+      // dispatch(media_changeMedia({ id: Number(currentMedia?.id), type }))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [Number(currentMedia?.id)]
+  )
 
   const createAudiVisualizeData = (): void => {
-    animationController = window.requestAnimationFrame(createAudiVisualizeData)
+    animationController = requestAnimationFrame(createAudiVisualizeData)
     if (audioRef?.current?.paused) {
-      animationControls.set({
-        scale: 1
-      })
-      return cancelAnimationFrame(animationController)
-    }
-    const arrayCount = Number(canvasRef?.current?.width) / BAR_WIDTH
-    const audioData = new Uint8Array(arrayCount)
+      setTimeout(() => {
+        return cancelAnimationFrame(animationController)
+      }, 350)
+    } else {
+      const arrayCount = Number(canvasRef?.current?.width) / BAR_WIDTH
+      const audioData = new Uint8Array(arrayCount)
 
-    if (analyzer?.current) {
-      analyzer.current.getByteFrequencyData(audioData)
-    }
+      if (analyzer?.current) {
+        analyzer.current.getByteFrequencyData(audioData)
+        // analyzer.fftSize = 200
+        // console.log('analyzer.fftSize;', analyzer.fftSize)
+      }
 
-    if (canvasRef?.current) {
-      let start = 0
-      const ctx = canvasRef.current.getContext('2d') as CanvasRenderingContext2D
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      if (canvasRef?.current) {
+        let start = 0
+        const ctx = canvasRef.current.getContext(
+          '2d'
+        ) as CanvasRenderingContext2D
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        for (let i = 0; i < audioData.length; i++) {
+          // compute x coordinate where we would draw
+          start = i * BAR_WIDTH + 1
 
-      const getScale = (value: number) => {
-        // const baseScale = 1
-        let scale = 1
-        const thresholds = [
-          { min: 0, max: 20, scale: 1 },
-          { min: 20, max: 50, scale: 1.01 },
-          { min: 51, max: 80, scale: 1.02 },
-          { min: 81, max: 120, scale: 1.03 },
-          { min: 121, max: 140, scale: 1.05 },
-          { min: 141, max: 150, scale: 1.08 },
-          { min: 151, max: 160, scale: 1.1 },
-          { min: 161, max: 170, scale: 1.13 },
-          { min: 171, max: 180, scale: 1.16 },
-          { min: 191, max: 200, scale: 1.2 },
-          { min: 201, max: 210, scale: 1.22 },
-          { min: 211, max: 220, scale: 1.26 },
-          { min: 221, max: 230, scale: 1.29 },
-          { min: 231, max: 240, scale: 1.34 },
-          { min: 241, max: 250, scale: 1.39 },
-          { min: 251, max: 260, scale: 1.45 },
-          { min: 280, max: Infinity, scale: 1.55 }
-        ]
+          const recHeight = Number(-audioData[i] + 40)
 
-        for (const threshold of thresholds) {
-          if (value > threshold.min && value < threshold.max) {
-            scale = threshold.scale
-            break
-          }
+          //create a gradient for the  whole canvas
+          const gradient = ctx.createLinearGradient(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          )
+          gradient.addColorStop(0.3, '#00b1ba')
+          gradient.addColorStop(0.5, '#00e8be')
+          gradient.addColorStop(1.0, '#c9f977')
+          ctx.fillStyle = gradient
+          ctx.fillRect(start, canvasRef.current.height, BAR_WIDTH, recHeight)
         }
-
-        // const scaleFactor = 0.02 // Adjust this factor as needed
-        // scale = baseScale + Math.floor(audioData[0] / 20) * scaleFactor
-        return scale
-      }
-
-      animationControls.set({
-        scale: getScale(
-          calculateMean(audioData.slice(5, 12) as unknown as number[])
-        )
-      })
-
-      // console.log(
-      //   'value --->',
-      //   calculateMean(audioData.slice(5, 12) as unknown as number[])
-      // )
-
-      for (let i = 0; i < audioData.length; i++) {
-        // compute x coordinate where we would draw
-        start = i * (BAR_WIDTH + 1)
-
-        const recHeight = Number(-audioData[i])
-
-        //create a gradient for the  whole canvas
-        const gradient = ctx.createLinearGradient(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height
-        )
-        gradient.addColorStop(0.1, '#FF2525')
-        gradient.addColorStop(1.0, '#ffd83b')
-        ctx.fillStyle = gradient
-        ctx.fillRect(start, canvasRef.current.height, BAR_WIDTH, recHeight)
       }
     }
   }
 
-  const onMediaChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const file = e.target?.files?.[0]
-    if (file) {
-      setMediaFile(file)
-      setFileName(file?.name ?? '')
+  const handleAudioPlay = (): void => {
+    const audioContext = new AudioContext()
+    // console.log('audioContext', audioContext)
+    if (!source?.current) {
+      source.current = audioContext.createMediaElementSource(
+        audioRef.current as HTMLMediaElement
+      )
+      analyzer.current = audioContext.createAnalyser()
+      source.current.connect(analyzer.current)
+      analyzer.current.connect(audioContext.destination)
+    }
+    createAudiVisualizeData()
+  }
+
+  const onClickToggle = (): void => {
+    if (audioRef?.current?.paused) {
+      audioRef?.current?.play()
+      setIsPlaying(true)
+    } else {
+      audioRef?.current?.pause()
+      setIsPlaying(false)
     }
   }
 
-  const handleAudioPlay = (params: ChangeEvent<HTMLAudioElement>): void => {
-    if (params.type === 'play') {
-      if (!source?.current) {
-        source.current = audioContext.createMediaElementSource(
-          audioRef.current as HTMLMediaElement
-        )
-        analyzer.current = audioContext.createAnalyser()
-        source.current.connect(analyzer.current)
-        analyzer.current.connect(audioContext.destination)
-      }
-      createAudiVisualizeData()
-    }
-  }
+  /* ---------- current position ---------- */
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    // fires ~4–5× per second while playing
+    const handleTimeUpdate = () => setPosition(audio.currentTime)
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+
+    // cleanup
+    return () => audio.removeEventListener('timeupdate', handleTimeUpdate)
+  }, [audioRef?.current])
 
   return (
     <Box
@@ -164,118 +150,144 @@ const MediaPlayer = () => {
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
-        mt: 8
+        mt: 2
       }}
     >
       <WidgetWrapper>
-        <Widget>
-          <Box sx={{ zIndex: 1 }}>
-            {!currentMedia ? (
-              <BoxUpload htmlFor='inputMediaFile'>
-                <Box sx={{ mb: 1.2, color: 'primary.main' }}>
-                  <Iconify
-                    icon='solar:music-library-2-bold-duotone'
-                    fontSize={54}
-                  />
-                </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography>
-                    Drop your media file or{' '}
-                    <Typography component='span' color='primary.main'>
-                      Browse
-                    </Typography>
-                  </Typography>
-                  <Typography variant='subtitle2'>
-                    Supported audio & video files
-                  </Typography>
-                </Box>
-              </BoxUpload>
-            ) : (
-              <BoxMediaInfo>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    '> *': {
-                      transition: 'transform 0.1s ease'
-                    }
-                  }}
-                >
-                  <motion.div animate={animationControls}>
-                    <CoverImage isPlaying={false}>
-                      <img
-                        alt={currentMedia.title ?? 'Cover img'}
-                        src={currentMedia.cover_image_url}
-                      />
-                    </CoverImage>
-                  </motion.div>
-                </Box>
-                <Box sx={{ maxWidth: '100%', textAlign: 'center', mt: 1 }}>
-                  <Typography variant='caption' color='#333' fontWeight={500}>
-                    {currentMedia?.artist ? currentMedia.artist : '-'}
-                  </Typography>
-                  <Typography noWrap variant='h6' sx={{ color: '#333' }}>
-                    <b>{currentMedia?.title ? currentMedia.title : '-'}</b>
-                  </Typography>
-                </Box>
-                {/* <UploadButton htmlFor='inputMediaFile'>
-                  <Iconify
-                    icon='solar:music-library-2-bold-duotone'
-                    fontSize={20}
-                  />
-                  <Typography sx={{ ml: 1, fontWeight: '600' }}>
-                    Change Media
-                  </Typography>
-                </UploadButton> */}
-              </BoxMediaInfo>
-            )}
-            <Box
-              component='input'
-              sx={{ display: 'none' }}
-              type='file'
-              id='inputMediaFile'
-              accept='audio/*,video/*'
-              onChange={onMediaChange}
-            />
+        <Widget isPlaying={isPlaying}>
+          <Box sx={{}}>
             {currentMedia && (
               <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  width: '100%',
-                  position: 'absolute',
-                  bottom: theme.spacing(4),
-                  left: 0,
-                  zIndex: 1,
-                  '> audio': {
-                    width: '85%'
-                  }
-                }}
-              >
-                <audio
-                  ref={audioRef}
-                  onPlay={handleAudioPlay}
-                  src={currentMedia.file_url}
-                  controls
-                />
-              </Box>
+                component='audio'
+                sx={{ display: 'none' }}
+                ref={audioRef}
+                onPlay={handleAudioPlay}
+                src={String(currentMedia.file_url)}
+                controls
+              />
             )}
           </Box>
+
           <Box
             sx={{
               position: 'absolute',
-              bottom: -10,
-              left: 0,
-              zIndex: -1
+              bottom: -6,
+              left: 0
             }}
           >
-            <canvas ref={canvasRef} width={450} height={360} />
+            <canvas ref={canvasRef} width={400} height={200} />
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              position: 'relative',
+              transition: [theme.transitions.create(['all'])],
+              mb: 1
+            }}
+          >
+            <motion.div
+              initial={{ rotate: 0, scale: 1 }}
+              animate={{
+                rotate: isPlaying ? [0, 360] : [0, 0]
+                // scale: isPlaying ? 1.2 : 1
+              }}
+              transition={{
+                duration: isPlaying ? 4 : 0,
+                ease: 'linear',
+                repeatDelay: 0,
+                repeatType: 'loop',
+                repeat: Infinity
+              }}
+            >
+              <CoverImage
+                isPlaying={isPlaying}
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
+                {currentMedia && (
+                  <img
+                    alt={currentMedia.title}
+                    src={
+                      currentMedia.cover_image
+                        ? currentMedia.cover_image
+                        : undefined
+                    }
+                  />
+                )}
+              </CoverImage>
+            </motion.div>
+
+            <Box sx={{ maxWidth: '100%', textAlign: 'center', mt: 1 }}>
+              <Typography variant='caption' color='#fff' fontWeight={500}>
+                {currentMedia?.artist ? currentMedia.artist : '-'}
+              </Typography>
+              <Typography noWrap variant='h6' sx={{ color: '#fff' }}>
+                <b>{currentMedia?.title ? currentMedia.title : '-'}</b>
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mt: -1
+            }}
+          >
+            <TinyText>{formatDuration(Number(position.toFixed()))}</TinyText>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mb: 1
+            }}
+          >
+            <IconButton
+              onClick={() => onChangeSong('prev')}
+              aria-label='previous song'
+              size='large'
+            >
+              <Box
+                component={PrevIcon}
+                sx={{ width: 20, height: 'auto', color: 'common.white' }}
+              />
+            </IconButton>
+            <IconButton
+              sx={{ mx: 2 }}
+              aria-label={isPlaying ? 'play' : 'pause'}
+              onClick={onClickToggle}
+              size='large'
+            >
+              {isPlaying ? (
+                <Box
+                  component={PauseIcon}
+                  sx={{ width: 32, height: 'auto', color: 'common.white' }}
+                />
+              ) : (
+                <Box
+                  component={PlayIcon}
+                  sx={{ width: 32, height: 'auto', color: 'common.white' }}
+                />
+              )}
+            </IconButton>
+            <IconButton
+              onClick={() => onChangeSong('next')}
+              aria-label='next song'
+              size='large'
+            >
+              <Box
+                component={NextIcon}
+                sx={{ width: 20, height: 'auto', color: 'common.white' }}
+              />
+            </IconButton>
           </Box>
         </Widget>
       </WidgetWrapper>
-      <WallPaper />
+      <BackgroundStyle />
     </Box>
   )
 }
